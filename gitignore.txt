@@ -1,0 +1,33 @@
+# Node modules (if you add any in the future)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test files
+test/
+*.test.html
+
+# Local development
+.env
+.env.local
+
+# Build outputs (if you add a build process later)
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+.cache/
