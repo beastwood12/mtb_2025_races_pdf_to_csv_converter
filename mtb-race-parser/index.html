@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTB Race Results Extractor</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .upload-section {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-section.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .status-message {
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .status-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .preview-section {
+            margin-top: 30px;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .preview-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 12px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .spinner-small {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        function RaceResultsExtractor() {
+            const [file, setFile] = useState(null);
+            const [previewData, setPreviewData] = useState(null);
+            const [fullData, setFullData] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [processing, setProcessing] = useState(false);
+            const [status, setStatus] = useState(null);
+            const [dragOver, setDragOver] = useState(false);
+            const fileInputRef = useRef(null);
+
+            // Initialize PDF.js
+            useEffect(() => {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }, []);
+
+            const handleFileSelect = (selectedFile) => {
+                if (selectedFile && selectedFile.type === 'application/pdf') {
+                    setFile(selectedFile);
+                    setPreviewData(null);
+                    setFullData(null);
+                    setStatus({ type: 'info', message: `File selected: ${selectedFile.name}` });
+                    extractPreview(selectedFile);
+                } else {
+                    setStatus({ type: 'error', message: 'Please select a valid PDF file' });
+                }
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const droppedFile = e.dataTransfer.files[0];
+                handleFileSelect(droppedFile);
+            };
+
+            const extractPreview = async (pdfFile) => {
+                setLoading(true);
+                try {
+                    const arrayBuffer = await pdfFile.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    const page = await pdf.getPage(1);
+                    const textContent = await page.getTextContent();
+                    
+                    // Build text with line breaks based on Y position
+                    let text = '';
+                    let lastY = null;
+                    
+                    textContent.items.forEach(item => {
+                        const currentY = item.transform[5];
+                        
+                        // Add newline if Y position changed (new line)
+                        if (lastY !== null && Math.abs(currentY - lastY) > 5) {
+                            text += '\n';
+                        }
+                        
+                        text += item.str + ' ';
+                        lastY = currentY;
+                    });
+                    
+                    console.log('Extracted text preview:', text.substring(0, 500));
+                    
+                    // Parse the first page
+                    const results = parseRaceResults(text, true);
+                    
+                    console.log('Parsed results:', results.length, 'entries');
+                    
+                    if (!results || results.length === 0) {
+                        setStatus({ type: 'error', message: 'No race results found in PDF. Please check the file format.' });
+                        setPreviewData(null);
+                        return;
+                    }
+                    
+                    setPreviewData(results);
+                    setStatus({ type: 'success', message: `Preview loaded: ${results.length} entries found on first page` });
+                } catch (error) {
+                    console.error('Error details:', error);
+                    setStatus({ type: 'error', message: `Error extracting preview: ${error.message}` });
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const processFullDocument = async () => {
+                if (!file) return;
+                
+                setProcessing(true);
+                setStatus({ type: 'info', message: 'Processing full document... This may take a moment.' });
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    
+                    let allText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        
+                        // Build text with line breaks based on Y position
+                        let pageText = '';
+                        let lastY = null;
+                        
+                        textContent.items.forEach(item => {
+                            const currentY = item.transform[5];
+                            
+                            // Add newline if Y position changed (new line)
+                            if (lastY !== null && Math.abs(currentY - lastY) > 5) {
+                                pageText += '\n';
+                            }
+                            
+                            pageText += item.str + ' ';
+                            lastY = currentY;
+                        });
+                        
+                        allText += pageText + '\n\n';
+                    }
+                    
+                    console.log('Full text sample:', allText.substring(0, 500));
+                    
+                    const results = parseRaceResults(allText, false);
+                    
+                    console.log('Full parsing results:', results.length, 'entries');
+                    
+                    if (!results || results.length === 0) {
+                        setStatus({ type: 'error', message: 'No race results found in full document. Please check the file format.' });
+                        setFullData(null);
+                        return;
+                    }
+                    
+                    setFullData(results);
+                    setStatus({ 
+                        type: 'success', 
+                        message: `Processing complete! ${results.length} total entries extracted from ${pdf.numPages} pages.` 
+                    });
+                } catch (error) {
+                    console.error('Error details:', error);
+                    setStatus({ type: 'error', message: `Error processing document: ${error.message}` });
+                } finally {
+                    setProcessing(false);
+                }
+            };
+
+            const parseRaceResults = (text, firstPageOnly) => {
+                const results = [];
+                
+                // Extract header info
+                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(\w+)/);
+                const year = headerMatch ? headerMatch[1] : '';
+                const region = headerMatch ? headerMatch[2] : '';
+                const location = headerMatch ? headerMatch[3] : '';
+                
+                // Split into lines
+                const lines = text.split(/\n/);
+                let currentCategory = '';
+                
+                // Team name patterns to help identify where team starts
+                const teamPatterns = [
+                    'Mountain Bike Team',
+                    'High School', 
+                    'Junior Devo',
+                    'Jr Devo',
+                    'Composite',
+                    'HS',
+                    'Devo'
+                ];
+                
+                // Match category headers
+                const categoryPattern = /^((?:Sr\.|Freshman|JV|Sophomore|Varsity|Beginner|Intermediate|Advanced|SLR).*(?:Boys|Girls|7th Grade|8th Grade))$/i;
+                
+                // Helper function to convert HH:MM:SS.FF to MM:SS.FF
+                const convertTime = (timeStr) => {
+                    if (!timeStr || timeStr === '-') return '';
+                    
+                    // Check for invalid time formats (e.g., x:xx:xx)
+                    // Valid times should only contain digits, colons, and periods
+                    if (!/^[\d:\.]+$/.test(timeStr)) {
+                        // Return as-is if it contains invalid characters
+                        return timeStr;
+                    }
+                    
+                    const parts = timeStr.split(':');
+                    if (parts.length === 3) {
+                        // HH:MM:SS.FF format
+                        const hours = parseInt(parts[0]);
+                        const minutes = parseInt(parts[1]);
+                        const seconds = parts[2];
+                        
+                        // Check if parsing resulted in valid numbers
+                        if (isNaN(hours) || isNaN(minutes)) {
+                            return timeStr; // Return original if invalid
+                        }
+                        
+                        const totalMinutes = hours * 60 + minutes;
+                        return `${totalMinutes}:${seconds}`;
+                    }
+                    // Already in MM:SS.FF or M:SS format
+                    return timeStr;
+                };
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // Skip header row
+                    if (line.includes('PLC NO NAME TEAM') || line.includes('UTAH HS MTB') || 
+                        line.includes('Individual Results') || !line) {
+                        continue;
+                    }
+                    
+                    // Check for category header
+                    const catMatch = line.match(categoryPattern);
+                    if (catMatch) {
+                        currentCategory = catMatch[1].trim();
+                        console.log('Found category:', currentCategory);
+                        continue;
+                    }
+                    
+                    // Parse data row
+                    const parts = line.split(/\s+/);
+                    
+                    // First part should be a number or * (for DNF)
+                    if (parts.length >= 8 && (parts[0].match(/^\d+$/) || parts[0] === '*')) {
+                        
+                        // FIX #2: Special handling for DNF entries
+                        if (parts[parts.length - 1] === 'DNF') {
+                            const placement = parts[0];
+                            const plateNum = parts[1];
+                            
+                            // Find first dash or DNF (where laps/DNF section starts)
+                            let firstDashIdx = -1;
+                            for (let j = 2; j < parts.length; j++) {
+                                if (parts[j] === '-' || parts[j] === 'DNF') {
+                                    firstDashIdx = j;
+                                    break;
+                                }
+                            }
+                            
+                            // Everything between plate# and first dash is name + team (possibly + points)
+                            let middleParts = [];
+                            if (firstDashIdx > 2) {
+                                middleParts = parts.slice(2, firstDashIdx);
+                            }
+                            
+                            // Check if the last element of middleParts is a 3-digit number (Points)
+                            let points = '';
+                            let teamEndIdx = middleParts.length;
+                            
+                            if (middleParts.length > 2 && middleParts[middleParts.length - 1].match(/^\d{3}$/)) {
+                                // Last element is points, exclude it from name/team parsing
+                                points = middleParts[middleParts.length - 1];
+                                teamEndIdx = middleParts.length - 1;
+                            }
+                            
+                            // Extract name and team (excluding points if found)
+                            const nameTeamParts = middleParts.slice(0, teamEndIdx);
+                            const name = nameTeamParts.slice(0, 2).join(' ');
+                            const team = cleanTeamName(nameTeamParts.slice(2).join(' '));
+                            
+                            const result = {
+                                Year: year,
+                                Region: region,
+                                Location: location,
+                                'Race Category': currentCategory,
+                                Placement: placement,
+                                'Plate#': plateNum,
+                                Name: name,
+                                Team: team,
+                                Points: points,
+                                LAP1: '',
+                                LAP2: '',
+                                LAP3: '',
+                                LAP4: '',
+                                Penalty: '',
+                                'Total Time': 'DNF'
+                            };
+                            
+                            results.push(result);
+                            console.log(`Parsed DNF: ${placement} ${plateNum} "${name}" "${team}" Points:${points || 'blank'}`);
+                            
+                            if (firstPageOnly && results.length >= 20) {
+                                break;
+                            }
+                            continue;  // Skip the rest of the parsing logic
+                        }
+                        
+                        const placement = parts[0];
+                        const plateNum = parts[1];
+                        
+                        // FIX #3: Find first time, 3-digit number, dash, or "DNF" after NO
+                        let ptsIdx = -1;
+                        let teamEndIdx = -1;
+                        
+                        for (let j = 2; j < parts.length; j++) {
+                            // Check for 3-digit number followed by time or dash
+                            if (parts[j].match(/^\d{3}$/) && j + 1 < parts.length && 
+                                (parts[j + 1].match(/^\d+:\d+/) || parts[j + 1] === '-')) {
+                                ptsIdx = j;
+                                teamEndIdx = j - 1;
+                                break;
+                            }
+                            // Check for FIRST dash or time (improved logic)
+                            if (parts[j] === '-' || (parts[j].match(/^\d+:\d+/) && 
+                                (!parts[j - 1] || !parts[j - 1].match(/^\d{3}$/)))) {
+                                ptsIdx = j;
+                                teamEndIdx = j - 1;
+                                break;
+                            }
+                            // Check for DNF (should have been caught by special handler above)
+                            if (parts[j] === 'DNF') {
+                                ptsIdx = j;
+                                teamEndIdx = j - 1;
+                                break;
+                            }
+                        }
+                        
+                        if (ptsIdx === -1 || teamEndIdx < 2) continue;
+                        
+                        // Build the middle section (between NO and PTS/LAP1)
+                        const middleParts = parts.slice(2, teamEndIdx + 1);
+                        
+                        // Strategy: Assume rider name is 2 words (First Last)
+                        // Everything else is team name
+                        let nameEndIdx = 1; // Default: first 2 words are name
+                        let teamStartIdx = 2; // Rest is team
+                        
+                        // If we have fewer than 2 words in middle, adjust
+                        if (middleParts.length < 2) {
+                            nameEndIdx = 0;
+                            teamStartIdx = 1;
+                        }
+                        
+                        // Extract name and team
+                        const name = middleParts.slice(0, nameEndIdx + 1).join(' ');
+                        const team = cleanTeamName(middleParts.slice(teamStartIdx).join(' '));
+                        
+                        // Check if PTS exists or is blank
+                        let actualPtsIdx = -1;
+                        let actualLap1Idx = ptsIdx;
+                        
+                        if (parts[ptsIdx].match(/^\d{3}$/)) {
+                            // It's a 3-digit number, so this is PTS
+                            actualPtsIdx = ptsIdx;
+                            actualLap1Idx = ptsIdx + 1;
+                        } else {
+                            // It's a time, so PTS is blank and this is LAP1
+                            actualPtsIdx = -1;
+                            actualLap1Idx = ptsIdx;
+                        }
+                        
+                        // Extract values working from the END backwards
+                        const totalTime = parts[parts.length - 1]; // Last element is always total time
+                        
+                        // Check if second-to-last is penalty (time format, not dash)
+                        let penalty = '';
+                        let lastLapIdx = parts.length - 1; // Where laps end
+                        
+                        if (parts.length >= 2 && parts[parts.length - 2].match(/^\d+:\d+/) && parts[parts.length - 2] !== '-') {
+                            penalty = parts[parts.length - 2];
+                            lastLapIdx = parts.length - 2; // Laps end before penalty
+                        }
+                        
+                        // Extract points
+                        const points = actualPtsIdx >= 0 ? parts[actualPtsIdx] : '';
+                        
+                        // Extract lap times between actualLap1Idx and lastLapIdx
+                        const lapValues = [];
+                        for (let i = actualLap1Idx; i < lastLapIdx; i++) {
+                            lapValues.push(parts[i] || '');
+                        }
+                        
+                        // Assign to LAP1-4 (pad with empty strings if needed)
+                        const lap1 = lapValues[0] || '';
+                        const lap2 = lapValues[1] || '';
+                        const lap3 = lapValues[2] || '';
+                        const lap4 = lapValues[3] || '';
+                        
+                        const result = {
+                            Year: year,
+                            Region: region,
+                            Location: location,
+                            'Race Category': currentCategory,
+                            Placement: placement,
+                            'Plate#': plateNum,
+                            Name: name,
+                            Team: team,
+                            Points: points === '-' ? '' : points,
+                            LAP1: convertTime(lap1 === '-' ? '' : lap1),
+                            LAP2: convertTime(lap2 === '-' ? '' : lap2),
+                            LAP3: convertTime(lap3 === '-' ? '' : lap3),
+                            LAP4: convertTime(lap4 === '-' ? '' : lap4),
+                            Penalty: convertTime(penalty === '-' ? '' : penalty),
+                            'Total Time': totalTime === 'DNF' ? 'DNF' : convertTime(totalTime)
+                        };
+                        
+                        results.push(result);
+                        console.log(`Parsed: ${placement} ${plateNum} "${name}" "${team}" Points:${points || 'blank'}`);
+                        
+                        if (firstPageOnly && results.length >= 20) {
+                            break;
+                        }
+                    }
+                }
+                
+                console.log(`Total results parsed: ${results.length}`);
+                return results;
+            };
+
+            const cleanTeamName = (team) => {
+                if (!team || team === '-') return '';
+                
+                // Remove trailing dashes and spaces
+                team = team.replace(/(\s+-)+\s*$/g, '');
+                
+                team = team.replace(/\s+High\s+School$/i, '');
+                team = team.replace(/\s+HS$/i, '');
+                team = team.replace(/\s+Jr\s+Devo$/i, '');
+                team = team.replace(/\s+Junior\s+Devo$/i, '');
+                team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
+                
+                return team.trim();
+            };
+
+            const downloadCSV = () => {
+                const data = fullData || previewData;
+                if (!data || data.length === 0) return;
+                
+                const headers = ['Year', 'Region', 'Location', 'Race Category', 'Placement', 'Plate#', 'Name', 'Team', 'Points', 'LAP1', 'LAP2', 'LAP3', 'LAP4', 'Penalty', 'Total Time'];
+                
+                let csv = headers.join(',') + '\n';
+                
+                data.forEach(row => {
+                    const values = headers.map(header => {
+                        const value = row[header] || '';
+                        // Escape commas and quotes
+                        if (value.includes(',') || value.includes('"')) {
+                            return `"${value.replace(/"/g, '""')}"`;
+                        }
+                        return value;
+                    });
+                    csv += values.join(',') + '\n';
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fullData ? 'race_results_full.csv' : 'race_results_preview.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            };
+
+            const dataToDisplay = fullData || previewData;
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🚴 MTB Race Results Extractor</h1>
+                        <p>Upload your PDF to extract and download race results as CSV</p>
+                    </div>
+                    
+                    <div className="content">
+                        <div 
+                            className={`upload-section ${dragOver ? 'dragover' : ''}`}
+                            onClick={() => fileInputRef.current.click()}
+                            onDrop={handleDrop}
+                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                        >
+                            <div className="upload-icon">📄</div>
+                            <h3>{file ? file.name : 'Click or drag PDF file here'}</h3>
+                            <p style={{ marginTop: '8px', color: '#6b7280' }}>
+                                {file ? 'Click to select a different file' : 'MTB Race Results PDF'}
+                            </p>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf"
+                                className="file-input"
+                                onChange={(e) => handleFileSelect(e.target.files[0])}
+                            />
+                        </div>
+
+                        {status && (
+                            <div className={`status-message status-${status.type}`}>
+                                <span>
+                                    {status.type === 'info' && 'ℹ️'}
+                                    {status.type === 'success' && '✅'}
+                                    {status.type === 'error' && '❌'}
+                                </span>
+                                <span>{status.message}</span>
+                            </div>
+                        )}
+
+                        {loading && (
+                            <div className="loading">
+                                <div className="spinner"></div>
+                                <span>Loading preview...</span>
+                            </div>
+                        )}
+
+                        {dataToDisplay && dataToDisplay.length > 0 && (
+                            <div className="preview-section">
+                                <div className="preview-header">
+                                    <h2>
+                                        {fullData ? 'Full Results' : 'Preview (First Page Only)'}
+                                        {!fullData && <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#6b7280', marginLeft: '12px' }}>
+                                            — Process full document to see all results
+                                        </span>}
+                                    </h2>
+                                </div>
+
+                                <div className="stats">
+                                    <div className="stat-card">
+                                        <div className="stat-label">Total Entries</div>
+                                        <div className="stat-value">{dataToDisplay.length}</div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Categories</div>
+                                        <div className="stat-value">
+                                            {new Set(dataToDisplay.map(r => r['Race Category'])).size}
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Teams</div>
+                                        <div className="stat-value">
+                                            {new Set(dataToDisplay.map(r => r.Team).filter(t => t)).size}
+                                        </div>
+                                    </div>
+                                    <div className="stat-card">
+                                        <div className="stat-label">Location</div>
+                                        <div className="stat-value">{dataToDisplay[0]?.Location || 'N/A'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Placement</th>
+                                                <th>Plate#</th>
+                                                <th>Name</th>
+                                                <th>Team</th>
+                                                <th>Category</th>
+                                                <th>Points</th>
+                                                <th>LAP1</th>
+                                                <th>LAP2</th>
+                                                <th>LAP3</th>
+                                                <th>LAP4</th>
+                                                <th>Penalty</th>
+                                                <th>Total Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dataToDisplay.slice(0, 50).map((row, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{row.Placement}</td>
+                                                    <td>{row['Plate#']}</td>
+                                                    <td>{row.Name}</td>
+                                                    <td>{row.Team}</td>
+                                                    <td>{row['Race Category']}</td>
+                                                    <td>{row.Points}</td>
+                                                    <td>{row.LAP1}</td>
+                                                    <td>{row.LAP2}</td>
+                                                    <td>{row.LAP3}</td>
+                                                    <td>{row.LAP4}</td>
+                                                    <td>{row.Penalty}</td>
+                                                    <td>{row['Total Time']}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {dataToDisplay.length > 50 && (
+                                    <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '20px' }}>
+                                        Showing first 50 of {dataToDisplay.length} entries
+                                    </p>
+                                )}
+
+                                <div className="action-buttons">
+                                    {!fullData && (
+                                        <button 
+                                            className="btn btn-primary"
+                                            onClick={processFullDocument}
+                                            disabled={processing}
+                                        >
+                                            {processing ? (
+                                                <>
+                                                    <div className="spinner-small"></div>
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>📊 Process Full Document</>
+                                            )}
+                                        </button>
+                                    )}
+                                    
+                                    <button 
+                                        className="btn btn-success"
+                                        onClick={downloadCSV}
+                                    >
+                                        ⬇️ Download {fullData ? 'Full' : 'Preview'} CSV
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<RaceResultsExtractor />, document.getElementById('root'));
+    </script>
+</body>
+</html>
