@@ -520,8 +520,29 @@
                             
                             // Extract name and team (excluding points if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
-                            const name = nameTeamParts.slice(0, 2).join(' ');
-                            const team = cleanTeamName(nameTeamParts.slice(2).join(' '));
+                            
+                            // Use same team indicator logic as regular entries
+                            const teamIndicators = ['High', 'HS', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite', 'School'];
+                            let teamStartIdx = -1;
+                            
+                            for (let i = 0; i < nameTeamParts.length; i++) {
+                                if (teamIndicators.includes(nameTeamParts[i])) {
+                                    // Back up to include school name
+                                    teamStartIdx = Math.max(0, i - 2);
+                                    if (teamStartIdx < 2) {
+                                        teamStartIdx = 2;
+                                    }
+                                    break;
+                                }
+                            }
+                            
+                            // Fall back to 2-word name if no indicator found
+                            if (teamStartIdx === -1) {
+                                teamStartIdx = Math.min(2, nameTeamParts.length);
+                            }
+                            
+                            const name = nameTeamParts.slice(0, teamStartIdx).join(' ');
+                            const team = cleanTeamName(nameTeamParts.slice(teamStartIdx).join(' '));
                             
                             const result = {
                                 Year: year,
@@ -585,19 +606,36 @@
                         // Build the middle section (between NO and PTS/LAP1)
                         const middleParts = parts.slice(2, teamEndIdx + 1);
                         
-                        // Strategy: Assume rider name is 2 words (First Last)
-                        // Everything else is team name
-                        let nameEndIdx = 1; // Default: first 2 words are name
-                        let teamStartIdx = 2; // Rest is team
+                        // Strategy: Find where team name starts by looking for team indicators
+                        // Team names typically look like: "Salem Hills HS" or "Lone Peak Jr Devo"
+                        // So we find the indicator and back up to include the school name
                         
-                        // If we have fewer than 2 words in middle, adjust
-                        if (middleParts.length < 2) {
-                            nameEndIdx = 0;
-                            teamStartIdx = 1;
+                        const teamIndicators = ['High', 'HS', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite', 'School'];
+                        
+                        let teamStartIdx = -1;
+                        
+                        // Search for the first team indicator word
+                        for (let i = 0; i < middleParts.length; i++) {
+                            if (teamIndicators.includes(middleParts[i])) {
+                                // Found an indicator! Team likely starts 1-2 words before this
+                                // Back up to include school name (e.g., "Salem Hills" before "HS")
+                                teamStartIdx = Math.max(0, i - 2);  // Go back up to 2 words
+                                
+                                // But don't go back so far that we have less than 2 words for the name
+                                if (teamStartIdx < 2) {
+                                    teamStartIdx = 2;  // At minimum, name is first 2 words
+                                }
+                                break;
+                            }
                         }
                         
-                        // Extract name and team
-                        const name = middleParts.slice(0, nameEndIdx + 1).join(' ');
+                        // If no team indicator found, fall back to 2-word name assumption
+                        if (teamStartIdx === -1) {
+                            teamStartIdx = Math.min(2, middleParts.length);
+                        }
+                        
+                        // Extract name (everything before team) and team (everything from team start onward)
+                        const name = middleParts.slice(0, teamStartIdx).join(' ');
                         const team = cleanTeamName(middleParts.slice(teamStartIdx).join(' '));
                         
                         // Check if PTS exists or is blank
