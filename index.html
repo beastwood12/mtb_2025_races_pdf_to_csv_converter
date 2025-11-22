@@ -528,9 +528,17 @@
                             for (let i = 0; i < nameTeamParts.length; i++) {
                                 if (teamIndicators.includes(nameTeamParts[i])) {
                                     // Back up to include school name
-                                    teamStartIdx = Math.max(0, i - 2);
-                                    if (teamStartIdx < 2) {
-                                        teamStartIdx = 2;
+                                    teamStartIdx = Math.max(0, i - 1);
+                                    
+                                    // Check for common multi-word school name patterns
+                                    const schoolPrefixes = ['Salem', 'South', 'North', 'East', 'West', 'Lone', 'Spanish', 'Maple', 'Sevier', 'Wasatch'];
+                                    if (teamStartIdx > 0 && nameTeamParts[teamStartIdx - 1] && schoolPrefixes.includes(nameTeamParts[teamStartIdx - 1])) {
+                                        teamStartIdx--;
+                                    }
+                                    
+                                    // Ensure at least 1-word name
+                                    if (teamStartIdx < 1) {
+                                        teamStartIdx = 1;
                                     }
                                     break;
                                 }
@@ -617,13 +625,19 @@
                         // Search for the first team indicator word
                         for (let i = 0; i < middleParts.length; i++) {
                             if (teamIndicators.includes(middleParts[i])) {
-                                // Found an indicator! Team likely starts 1-2 words before this
-                                // Back up to include school name (e.g., "Salem Hills" before "HS")
-                                teamStartIdx = Math.max(0, i - 2);  // Go back up to 2 words
+                                // Found an indicator! Back up to include school name
+                                teamStartIdx = Math.max(0, i - 1);  // Back up 1 position
                                 
-                                // But don't go back so far that we have less than 2 words for the name
-                                if (teamStartIdx < 2) {
-                                    teamStartIdx = 2;  // At minimum, name is first 2 words
+                                // Check for common multi-word school name patterns
+                                // (e.g., "Salem Hills HS", "South Summit HS")
+                                const schoolPrefixes = ['Salem', 'South', 'North', 'East', 'West', 'Lone', 'Spanish', 'Maple', 'Sevier', 'Wasatch'];
+                                if (teamStartIdx > 0 && middleParts[teamStartIdx - 1] && schoolPrefixes.includes(middleParts[teamStartIdx - 1])) {
+                                    teamStartIdx--;  // Include the prefix word
+                                }
+                                
+                                // Ensure at least 1-word name
+                                if (teamStartIdx < 1) {
+                                    teamStartIdx = 1;
                                 }
                                 break;
                             }
