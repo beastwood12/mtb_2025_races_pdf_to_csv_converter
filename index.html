@@ -521,23 +521,25 @@
                             // Extract name and team (excluding points if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
-                            // Simplified team detection (same as regular entries)
-                            const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                            // Smart name/team split (same as regular entries)
+                            const schoolPrefixes = [
+                                'American', 'Salem', 'South', 'North', 'East', 'West', 'Snow', 'Creek', 
+                                'Desert', 'Pine', 'Pleasant', 'Lone', 'Spanish', 'Maple', 'Sevier', 
+                                'Wasatch', 'Iron', 'Kanab', 'Crimson', 'Cedar', 'Moab', 'Panguitch',
+                                'Skyridge', 'Lehi', 'Payson', 'Springville'
+                            ];
                             
-                            let teamStartIdx = -1;
+                            let teamStartIdx = 2; // Default: 2-word name
                             
-                            // Find the FIRST indicator (leftmost)
-                            for (let i = 0; i < nameTeamParts.length; i++) {
-                                if (allIndicators.includes(nameTeamParts[i])) {
-                                    // Found an indicator! Assume standard 2-word name
-                                    teamStartIdx = 2;
-                                    break;
+                            // Check if this might be a 3-word name
+                            if (nameTeamParts.length >= 3 && !schoolPrefixes.includes(nameTeamParts[2])) {
+                                const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                                for (let i = 3; i < nameTeamParts.length; i++) {
+                                    if (allIndicators.includes(nameTeamParts[i])) {
+                                        teamStartIdx = 3;
+                                        break;
+                                    }
                                 }
-                            }
-                            
-                            // If no indicator found, assume 2-word name
-                            if (teamStartIdx === -1) {
-                                teamStartIdx = 2;
                             }
                             
                             // Ensure at least 1 word for name
@@ -615,26 +617,31 @@
                         // Build the middle section (between NO and PTS/LAP1)
                         const middleParts = parts.slice(2, teamEndIdx + 1);
                         
-                        // Simplified team detection:
-                        // When any indicator is found, assume standard 2-word name
-                        // Everything from position 2 onward is team (handles multi-word teams)
+                        // Smart name/team split:
+                        // Default: 2-word name (position 2)
+                        // Exception: If word 3 is NOT a school prefix, it's likely a 3-word name
                         
-                        const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                        const schoolPrefixes = [
+                            'American', 'Salem', 'South', 'North', 'East', 'West', 'Snow', 'Creek', 
+                            'Desert', 'Pine', 'Pleasant', 'Lone', 'Spanish', 'Maple', 'Sevier', 
+                            'Wasatch', 'Iron', 'Kanab', 'Crimson', 'Cedar', 'Moab', 'Panguitch',
+                            'Skyridge', 'Lehi', 'Payson', 'Springville'
+                        ];
                         
-                        let teamStartIdx = -1;
+                        let teamStartIdx = 2; // Default: 2-word name
                         
-                        // Find the FIRST indicator (leftmost)
-                        for (let i = 0; i < middleParts.length; i++) {
-                            if (allIndicators.includes(middleParts[i])) {
-                                // Found an indicator! Assume standard 2-word name
-                                teamStartIdx = 2;
-                                break;
+                        // Check if this might be a 3-word name
+                        if (middleParts.length >= 3 && !schoolPrefixes.includes(middleParts[2])) {
+                            // Word 3 is not a known school prefix
+                            // Check if word 4+ contains an indicator (suggesting word 3 is part of name)
+                            const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                            for (let i = 3; i < middleParts.length; i++) {
+                                if (allIndicators.includes(middleParts[i])) {
+                                    // Found indicator after position 3 → likely 3-word name
+                                    teamStartIdx = 3;
+                                    break;
+                                }
                             }
-                        }
-                        
-                        // If no indicator found, assume 2-word name (most common case)
-                        if (teamStartIdx === -1) {
-                            teamStartIdx = 2;
                         }
                         
                         // Ensure at least 1 word for name
