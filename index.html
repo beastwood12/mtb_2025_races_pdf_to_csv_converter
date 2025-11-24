@@ -510,24 +510,24 @@
                                 middleParts = parts.slice(2, firstDashIdx);
                             }
                             
-                            // Check if the last element of middleParts is a 3-digit number (Points)
+                            // FIX: Extract points and lap times from middleParts
+                            // Order can vary: sometimes points-then-lap, sometimes just points, sometimes just lap
+                            // Example: CREW SMITH Pleasant Grove Biking Vikings 200 21:55 - - - DNF
                             let points = '';
                             let teamEndIdx = middleParts.length;
                             
-                            if (middleParts.length > 2 && middleParts[middleParts.length - 1].match(/^\d{3}$/)) {
-                                // Last element is points, exclude it from name/team parsing
-                                points = middleParts[middleParts.length - 1];
-                                teamEndIdx = middleParts.length - 1;
+                            // First, remove any trailing lap times (format: MM:SS or HH:MM:SS)
+                            while (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d+:\d+/)) {
+                                teamEndIdx--;
                             }
                             
-                            // FIX: Also check if the last element (after excluding points) is a lap time
-                            // This handles cases like: * 498 CREW SMITH Pleasant Grove Biking Vikings 200 21:55 - - - DNF
-                            if (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d+:\d+/)) {
-                                // Last element before points is a lap time, exclude it too
-                                teamEndIdx = teamEndIdx - 1;
+                            // Then check if what remains ends with a 3-digit number (points)
+                            if (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d{3}$/)) {
+                                points = middleParts[teamEndIdx - 1];
+                                teamEndIdx--;
                             }
                             
-                            // Extract name and team (excluding points and lap time if found)
+                            // Extract name and team (excluding points and lap times)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
                             // Case-based name/team split (same as regular entries)
