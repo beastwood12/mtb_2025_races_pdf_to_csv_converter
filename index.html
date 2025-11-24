@@ -521,32 +521,27 @@
                             // Extract name and team (excluding points if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
-                            // Use same team indicator logic as regular entries
+                            // Greedy team detection (same as regular entries)
                             const teamIndicators = ['High', 'HS', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite', 'School'];
                             let teamStartIdx = -1;
                             
+                            // Search for the first team indicator word
                             for (let i = 0; i < nameTeamParts.length; i++) {
                                 if (teamIndicators.includes(nameTeamParts[i])) {
-                                    // Back up to include school name
-                                    teamStartIdx = Math.max(0, i - 1);
-                                    
-                                    // Check for common multi-word school name patterns
-                                    const schoolPrefixes = ['Salem', 'South', 'North', 'East', 'West', 'Lone', 'Spanish', 'Maple', 'Sevier', 'Wasatch'];
-                                    if (teamStartIdx > 0 && nameTeamParts[teamStartIdx - 1] && schoolPrefixes.includes(nameTeamParts[teamStartIdx - 1])) {
-                                        teamStartIdx--;
-                                    }
-                                    
-                                    // Ensure at least 1-word name
-                                    if (teamStartIdx < 1) {
-                                        teamStartIdx = 1;
-                                    }
+                                    // Found indicator! Everything from here onward is team
+                                    teamStartIdx = i;
                                     break;
                                 }
                             }
                             
-                            // Fall back to 2-word name if no indicator found
+                            // If no indicator found, assume 2-word name (most common case)
                             if (teamStartIdx === -1) {
-                                teamStartIdx = Math.min(2, nameTeamParts.length);
+                                teamStartIdx = 2;
+                            }
+                            
+                            // Ensure at least 1 word for name
+                            if (teamStartIdx < 1) {
+                                teamStartIdx = 1;
                             }
                             
                             const name = nameTeamParts.slice(0, teamStartIdx).join(' ');
@@ -614,9 +609,11 @@
                         // Build the middle section (between NO and PTS/LAP1)
                         const middleParts = parts.slice(2, teamEndIdx + 1);
                         
-                        // Strategy: Find where team name starts by looking for team indicators
-                        // Team names typically look like: "Salem Hills HS" or "Lone Peak Jr Devo"
-                        // So we find the indicator and back up to include the school name
+                        // Greedy team detection strategy:
+                        // 1. Find first team indicator (HS, Jr, Devo, Composite, etc.)
+                        // 2. Everything from indicator onward is team (handles multi-word teams)
+                        // 3. If no indicator, assume 2-word name, everything else is team
+                        // 4. Always ensure at least 1 word remains for name
                         
                         const teamIndicators = ['High', 'HS', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite', 'School'];
                         
@@ -625,27 +622,20 @@
                         // Search for the first team indicator word
                         for (let i = 0; i < middleParts.length; i++) {
                             if (teamIndicators.includes(middleParts[i])) {
-                                // Found an indicator! Back up to include school name
-                                teamStartIdx = Math.max(0, i - 1);  // Back up 1 position
-                                
-                                // Check for common multi-word school name patterns
-                                // (e.g., "Salem Hills HS", "South Summit HS")
-                                const schoolPrefixes = ['Salem', 'South', 'North', 'East', 'West', 'Lone', 'Spanish', 'Maple', 'Sevier', 'Wasatch'];
-                                if (teamStartIdx > 0 && middleParts[teamStartIdx - 1] && schoolPrefixes.includes(middleParts[teamStartIdx - 1])) {
-                                    teamStartIdx--;  // Include the prefix word
-                                }
-                                
-                                // Ensure at least 1-word name
-                                if (teamStartIdx < 1) {
-                                    teamStartIdx = 1;
-                                }
+                                // Found indicator! Everything from here onward is team
+                                teamStartIdx = i;
                                 break;
                             }
                         }
                         
-                        // If no team indicator found, fall back to 2-word name assumption
+                        // If no indicator found, assume 2-word name (most common case)
                         if (teamStartIdx === -1) {
-                            teamStartIdx = Math.min(2, middleParts.length);
+                            teamStartIdx = 2;
+                        }
+                        
+                        // Ensure at least 1 word for name
+                        if (teamStartIdx < 1) {
+                            teamStartIdx = 1;
                         }
                         
                         // Extract name (everything before team) and team (everything from team start onward)
@@ -730,11 +720,21 @@
                 // Remove trailing dashes and spaces
                 team = team.replace(/(\s+-)+\s*$/g, '');
                 
+                // Remove common suffixes
                 team = team.replace(/\s+High\s+School$/i, '');
                 team = team.replace(/\s+HS$/i, '');
                 team = team.replace(/\s+Jr\s+Devo$/i, '');
                 team = team.replace(/\s+Junior\s+Devo$/i, '');
                 team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
+                team = team.replace(/\s+Biking$/i, '');
+                
+                // Remove mascot names
+                team = team.replace(/\s+Red\s+Devils$/i, '');
+                team = team.replace(/\s+Vikings$/i, '');
+                team = team.replace(/\s+Bobcats$/i, '');
+                team = team.replace(/\s+Panthers$/i, '');
+                team = team.replace(/\s+Flyers$/i, '');
+                team = team.replace(/\s+Thunder$/i, '');
                 
                 return team.trim();
             };
