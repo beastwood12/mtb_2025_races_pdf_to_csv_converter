@@ -483,7 +483,9 @@
                     }
                     
                     // Parse data row
-                    const parts = line.split(/\s+/);
+                    // Normalize parentheses: ensure spaces around them for consistent splitting
+                    let normalizedLine = line.replace(/\(/g, ' (').replace(/\)/g, ') ').replace(/\s+/g, ' ').trim();
+                    const parts = normalizedLine.split(/\s+/);
                     
                     // First part should be a number or * (for DNF)
                     if (parts.length >= 8 && (parts[0].match(/^\d+$/) || parts[0] === '*')) {
@@ -521,25 +523,26 @@
                             // Extract name and team (excluding points if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
-                            // Smart name/team split (same as regular entries)
-                            const schoolPrefixes = [
-                                'American', 'Salem', 'South', 'North', 'East', 'West', 'Snow', 'Creek', 
-                                'Desert', 'Pine', 'Pleasant', 'Lone', 'Spanish', 'Maple', 'Sevier', 
-                                'Wasatch', 'Iron', 'Kanab', 'Crimson', 'Cedar', 'Moab', 'Panguitch',
-                                'Skyridge', 'Lehi', 'Payson', 'Springville'
-                            ];
+                            // Case-based name/team split (same as regular entries)
+                            let teamStartIdx = -1;
                             
-                            let teamStartIdx = 2; // Default: 2-word name
+                            // Helper function to check if word is all uppercase
+                            const isAllCaps = (word) => {
+                                const letters = word.replace(/[^A-Za-z]/g, '');
+                                return letters.length > 0 && letters === letters.toUpperCase();
+                            };
                             
-                            // Check if this might be a 3-word name
-                            if (nameTeamParts.length >= 3 && !schoolPrefixes.includes(nameTeamParts[2])) {
-                                const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
-                                for (let i = 3; i < nameTeamParts.length; i++) {
-                                    if (allIndicators.includes(nameTeamParts[i])) {
-                                        teamStartIdx = 3;
-                                        break;
-                                    }
+                            // Find first word that's NOT all caps
+                            for (let i = 0; i < nameTeamParts.length; i++) {
+                                if (!isAllCaps(nameTeamParts[i])) {
+                                    teamStartIdx = i;
+                                    break;
                                 }
+                            }
+                            
+                            // Fallback: if everything is caps, use position 2
+                            if (teamStartIdx === -1) {
+                                teamStartIdx = 2;
                             }
                             
                             // Ensure at least 1 word for name
@@ -617,31 +620,30 @@
                         // Build the middle section (between NO and PTS/LAP1)
                         const middleParts = parts.slice(2, teamEndIdx + 1);
                         
-                        // Smart name/team split:
-                        // Default: 2-word name (position 2)
-                        // Exception: If word 3 is NOT a school prefix, it's likely a 3-word name
+                        // Case-based name/team split:
+                        // Names are ALL CAPS in PDFs, teams are Title Case
+                        // Find the first word with lowercase letters (mixed case) = team starts there
                         
-                        const schoolPrefixes = [
-                            'American', 'Salem', 'South', 'North', 'East', 'West', 'Snow', 'Creek', 
-                            'Desert', 'Pine', 'Pleasant', 'Lone', 'Spanish', 'Maple', 'Sevier', 
-                            'Wasatch', 'Iron', 'Kanab', 'Crimson', 'Cedar', 'Moab', 'Panguitch',
-                            'Skyridge', 'Lehi', 'Payson', 'Springville'
-                        ];
+                        let teamStartIdx = -1;
                         
-                        let teamStartIdx = 2; // Default: 2-word name
+                        // Helper function to check if word is all uppercase
+                        const isAllCaps = (word) => {
+                            // Ignore non-letter characters like periods, numbers
+                            const letters = word.replace(/[^A-Za-z]/g, '');
+                            return letters.length > 0 && letters === letters.toUpperCase();
+                        };
                         
-                        // Check if this might be a 3-word name
-                        if (middleParts.length >= 3 && !schoolPrefixes.includes(middleParts[2])) {
-                            // Word 3 is not a known school prefix
-                            // Check if word 4+ contains an indicator (suggesting word 3 is part of name)
-                            const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
-                            for (let i = 3; i < middleParts.length; i++) {
-                                if (allIndicators.includes(middleParts[i])) {
-                                    // Found indicator after position 3 → likely 3-word name
-                                    teamStartIdx = 3;
-                                    break;
-                                }
+                        // Find first word that's NOT all caps (has lowercase = Title Case)
+                        for (let i = 0; i < middleParts.length; i++) {
+                            if (!isAllCaps(middleParts[i])) {
+                                teamStartIdx = i;
+                                break;
                             }
+                        }
+                        
+                        // Fallback: if everything is caps (shouldn't happen), use position 2
+                        if (teamStartIdx === -1) {
+                            teamStartIdx = 2;
                         }
                         
                         // Ensure at least 1 word for name
@@ -753,6 +755,7 @@
                 team = team.replace(/\s+Panthers$/i, '');
                 team = team.replace(/\s+Flyers$/i, '');
                 team = team.replace(/\s+Thunder$/i, '');
+                team = team.replace(/\s+Bulldogs$/i, '');
                 
                 return team.trim();
             };
