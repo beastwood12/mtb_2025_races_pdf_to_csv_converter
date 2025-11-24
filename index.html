@@ -520,7 +520,14 @@
                                 teamEndIdx = middleParts.length - 1;
                             }
                             
-                            // Extract name and team (excluding points if found)
+                            // FIX: Also check if the last element (after excluding points) is a lap time
+                            // This handles cases like: * 498 CREW SMITH Pleasant Grove Biking Vikings 200 21:55 - - - DNF
+                            if (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d+:\d+/)) {
+                                // Last element before points is a lap time, exclude it too
+                                teamEndIdx = teamEndIdx - 1;
+                            }
+                            
+                            // Extract name and team (excluding points and lap time if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
                             // Case-based name/team split (same as regular entries)
@@ -745,6 +752,7 @@
                 team = team.replace(/\s+Junior\s+Devo$/i, '');
                 team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
                 team = team.replace(/\s+Composite$/i, '');
+                team = team.replace(/\s+Comp$/i, '');
                 
                 // Remove mascot names
                 team = team.replace(/\s+Red\s+Devils$/i, '');
@@ -756,6 +764,7 @@
                 team = team.replace(/\s+Flyers$/i, '');
                 team = team.replace(/\s+Thunder$/i, '');
                 team = team.replace(/\s+Bulldogs$/i, '');
+                team = team.replace(/\s+Chaos$/i, '');
                 
                 return team.trim();
             };
