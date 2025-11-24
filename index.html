@@ -521,31 +521,21 @@
                             // Extract name and team (excluding points if found)
                             const nameTeamParts = middleParts.slice(0, teamEndIdx);
                             
-                            // Team detection (same as regular entries)
-                            const strongIndicators = ['HS', 'High', 'School'];
-                            const weakIndicators = ['Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                            // Simplified team detection (same as regular entries)
+                            const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
                             
                             let teamStartIdx = -1;
                             
-                            // First check for strong indicators
+                            // Find the FIRST indicator (leftmost)
                             for (let i = 0; i < nameTeamParts.length; i++) {
-                                if (strongIndicators.includes(nameTeamParts[i])) {
-                                    teamStartIdx = Math.max(1, i - 1);
+                                if (allIndicators.includes(nameTeamParts[i])) {
+                                    // Found an indicator! Assume standard 2-word name
+                                    teamStartIdx = 2;
                                     break;
                                 }
                             }
                             
-                            // If no strong indicator, check for weak indicators
-                            if (teamStartIdx === -1) {
-                                for (let i = 0; i < nameTeamParts.length; i++) {
-                                    if (weakIndicators.includes(nameTeamParts[i])) {
-                                        teamStartIdx = Math.max(1, i - 2);
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            // If still no indicator found, assume 2-word name
+                            // If no indicator found, assume 2-word name
                             if (teamStartIdx === -1) {
                                 teamStartIdx = 2;
                             }
@@ -553,6 +543,11 @@
                             // Ensure at least 1 word for name
                             if (teamStartIdx < 1) {
                                 teamStartIdx = 1;
+                            }
+                            
+                            // Ensure we don't go beyond array bounds
+                            if (teamStartIdx >= nameTeamParts.length) {
+                                teamStartIdx = nameTeamParts.length - 1;
                             }
                             
                             const name = nameTeamParts.slice(0, teamStartIdx).join(' ');
@@ -620,38 +615,24 @@
                         // Build the middle section (between NO and PTS/LAP1)
                         const middleParts = parts.slice(2, teamEndIdx + 1);
                         
-                        // Team detection strategy:
-                        // - Strong indicators (HS, High, School) typically END team names
-                        // - Weak indicators (Jr, Devo, Composite) are often in MIDDLE of multi-word teams
-                        // - For weak indicators, we need to capture everything from where team likely starts
+                        // Simplified team detection:
+                        // When any indicator is found, assume standard 2-word name
+                        // Everything from position 2 onward is team (handles multi-word teams)
                         
-                        const strongIndicators = ['HS', 'High', 'School'];
-                        const weakIndicators = ['Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
+                        const allIndicators = ['HS', 'High', 'School', 'Junior', 'Jr', 'Devo', 'Mountain', 'Bike', 'Team', 'Composite'];
                         
                         let teamStartIdx = -1;
                         
-                        // First check for strong indicators (these typically end the team name)
+                        // Find the FIRST indicator (leftmost)
                         for (let i = 0; i < middleParts.length; i++) {
-                            if (strongIndicators.includes(middleParts[i])) {
-                                // Strong indicator found! Back up 1-2 words to capture school name
-                                teamStartIdx = Math.max(1, i - 1);
+                            if (allIndicators.includes(middleParts[i])) {
+                                // Found an indicator! Assume standard 2-word name
+                                teamStartIdx = 2;
                                 break;
                             }
                         }
                         
-                        // If no strong indicator, check for weak indicators
-                        if (teamStartIdx === -1) {
-                            for (let i = 0; i < middleParts.length; i++) {
-                                if (weakIndicators.includes(middleParts[i])) {
-                                    // Weak indicator found! These are often part of multi-word teams
-                                    // Back up 2 positions to capture the school name before it
-                                    teamStartIdx = Math.max(1, i - 2);
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        // If still no indicator found, assume 2-word name (most common case)
+                        // If no indicator found, assume 2-word name (most common case)
                         if (teamStartIdx === -1) {
                             teamStartIdx = 2;
                         }
@@ -659,6 +640,11 @@
                         // Ensure at least 1 word for name
                         if (teamStartIdx < 1) {
                             teamStartIdx = 1;
+                        }
+                        
+                        // Ensure we don't go beyond array bounds
+                        if (teamStartIdx >= middleParts.length) {
+                            teamStartIdx = middleParts.length - 1;
                         }
                         
                         // Extract name (everything before team) and team (everything from team start onward)
