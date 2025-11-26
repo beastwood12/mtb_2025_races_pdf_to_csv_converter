@@ -885,52 +885,7 @@
                                     </div>
                                 </div>
 
-                                <div className="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Placement</th>
-                                                <th>Plate#</th>
-                                                <th>Name</th>
-                                                <th>Team</th>
-                                                <th>Category</th>
-                                                <th>Points</th>
-                                                <th>LAP1</th>
-                                                <th>LAP2</th>
-                                                <th>LAP3</th>
-                                                <th>LAP4</th>
-                                                <th>Penalty</th>
-                                                <th>Total Time</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {dataToDisplay.slice(0, 50).map((row, idx) => (
-                                                <tr key={idx}>
-                                                    <td>{row.Placement}</td>
-                                                    <td>{row['Plate#']}</td>
-                                                    <td>{row.Name}</td>
-                                                    <td>{row.Team}</td>
-                                                    <td>{row['Race Category']}</td>
-                                                    <td>{row.Points}</td>
-                                                    <td>{row.LAP1}</td>
-                                                    <td>{row.LAP2}</td>
-                                                    <td>{row.LAP3}</td>
-                                                    <td>{row.LAP4}</td>
-                                                    <td>{row.Penalty}</td>
-                                                    <td>{row['Total Time']}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {dataToDisplay.length > 50 && (
-                                    <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '20px' }}>
-                                        Showing first 50 of {dataToDisplay.length} entries
-                                    </p>
-                                )}
-
-                                <div className="action-buttons">
+                                <div className="action-buttons" style={{ marginBottom: '20px' }}>
                                     {!fullData && (
                                         <button 
                                             className="btn btn-primary"
@@ -955,6 +910,51 @@
                                         ⬇️ Download {fullData ? 'Full' : 'Preview'} CSV
                                     </button>
                                 </div>
+
+                                <div className="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Placement</th>
+                                                <th>Plate#</th>
+                                                <th>Name</th>
+                                                <th>Team</th>
+                                                <th>Category</th>
+                                                <th>Points</th>
+                                                <th>LAP1</th>
+                                                <th>LAP2</th>
+                                                <th>LAP3</th>
+                                                <th>LAP4</th>
+                                                <th>Penalty</th>
+                                                <th>Total Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {dataToDisplay.slice(0, 15).map((row, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{row.Placement}</td>
+                                                    <td>{row['Plate#']}</td>
+                                                    <td>{row.Name}</td>
+                                                    <td>{row.Team}</td>
+                                                    <td>{row['Race Category']}</td>
+                                                    <td>{row.Points}</td>
+                                                    <td>{row.LAP1}</td>
+                                                    <td>{row.LAP2}</td>
+                                                    <td>{row.LAP3}</td>
+                                                    <td>{row.LAP4}</td>
+                                                    <td>{row.Penalty}</td>
+                                                    <td>{row['Total Time']}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {dataToDisplay.length > 15 && (
+                                    <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '20px' }}>
+                                        Showing first 15 of {dataToDisplay.length} entries
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>
