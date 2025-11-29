@@ -758,14 +758,15 @@
                 }
                 
                 // Remove common suffixes
+                // Mountain Bike Team variants MUST come first so "High School" can be removed after
+                team = team.replace(/\s+Mountain\s+Biking\s+Team$/i, '');  // Layton variant
+                team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
                 team = team.replace(/\s+High\s+School$/i, '');
                 team = team.replace(/\s+HS$/i, '');
                 team = team.replace(/\s+Jr\s+Devo$/i, '');
                 team = team.replace(/\s+Junior\s+Devo$/i, '');
                 team = team.replace(/\s+DEVO$/i, '');  // Remove standalone DEVO after Jr Devo
                 team = team.replace(/\s+MS$/i, '');  // Middle School
-                team = team.replace(/\s+Mountain\s+Biking\s+Team$/i, '');  // Layton variant
-                team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
                 team = team.replace(/\s+Composite$/i, '');
                 team = team.replace(/\s+Comp$/i, '');
                 
