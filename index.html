@@ -745,6 +745,18 @@
                 // Remove trailing dashes and spaces
                 team = team.replace(/(\s+-)+\s*$/g, '');
                 
+                // Special handling for West High and East High - preserve "High" in name
+                // Must come BEFORE general High School/HS removal
+                if (/^West\s+High\s+School/i.test(team)) {
+                    team = team.replace(/^West\s+High\s+School\s*/i, 'West High ');
+                }
+                if (/^East\s+High\s+School/i.test(team)) {
+                    team = team.replace(/^East\s+High\s+School\s*/i, 'East High ');
+                }
+                if (/^East\s+HS$/i.test(team)) {
+                    team = 'East High';
+                }
+                
                 // Remove common suffixes
                 team = team.replace(/\s+High\s+School$/i, '');
                 team = team.replace(/\s+HS$/i, '');
@@ -752,6 +764,7 @@
                 team = team.replace(/\s+Junior\s+Devo$/i, '');
                 team = team.replace(/\s+DEVO$/i, '');  // Remove standalone DEVO after Jr Devo
                 team = team.replace(/\s+MS$/i, '');  // Middle School
+                team = team.replace(/\s+Mountain\s+Biking\s+Team$/i, '');  // Layton variant
                 team = team.replace(/\s+Mountain\s+Bike\s+Team$/i, '');
                 team = team.replace(/\s+Composite$/i, '');
                 team = team.replace(/\s+Comp$/i, '');
