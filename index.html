@@ -487,24 +487,25 @@
                     let normalizedLine = line.replace(/\(/g, ' (').replace(/\)/g, ') ').replace(/\s+/g, ' ').trim();
                     const parts = normalizedLine.split(/\s+/);
                     
-                    // First part should be a number or * (for DNF)
+                    // First part should be a number or * (for DNF/DNS)
                     if (parts.length >= 8 && (parts[0].match(/^\d+$/) || parts[0] === '*')) {
                         
-                        // FIX #2: Special handling for DNF entries
-                        if (parts[parts.length - 1] === 'DNF') {
+                        // FIX #2: Special handling for DNF and DNS entries
+                        const lastPart = parts[parts.length - 1];
+                        if (lastPart === 'DNF' || lastPart === 'DNS') {
                             const placement = parts[0];
                             const plateNum = parts[1];
                             
-                            // Find first dash or DNF (where laps/DNF section starts)
+                            // Find first dash or DNF/DNS (where laps/status section starts)
                             let firstDashIdx = -1;
                             for (let j = 2; j < parts.length; j++) {
-                                if (parts[j] === '-' || parts[j] === 'DNF') {
+                                if (parts[j] === '-' || parts[j] === 'DNF' || parts[j] === 'DNS') {
                                     firstDashIdx = j;
                                     break;
                                 }
                             }
                             
-                            // Everything between plate# and first dash is name + team (possibly + points)
+                            // Everything between plate# and first dash is name + team (possibly + points + lap time)
                             let middleParts = [];
                             if (firstDashIdx > 2) {
                                 middleParts = parts.slice(2, firstDashIdx);
@@ -513,16 +514,22 @@
                             // FIX: Extract points and lap times from middleParts
                             // Order can vary: sometimes points-then-lap, sometimes just points, sometimes just lap
                             // Example: CREW SMITH Pleasant Grove Biking Vikings 200 21:55 - - - DNF
+                            // Example: OWEN NIELSEN Northridge 0 78:52 - - - DNS
                             let points = '';
+                            let lap1Time = '';
                             let teamEndIdx = middleParts.length;
                             
                             // First, remove any trailing lap times (format: MM:SS or HH:MM:SS)
                             while (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d+:\d+/)) {
+                                // Capture the first lap time we find (for DNS with partial completion)
+                                if (!lap1Time) {
+                                    lap1Time = convertTime(middleParts[teamEndIdx - 1]);
+                                }
                                 teamEndIdx--;
                             }
                             
-                            // Then check if what remains ends with a 3-digit number (points)
-                            if (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d{3}$/)) {
+                            // Then check if what remains ends with a number (points - can be 1-3 digits)
+                            if (teamEndIdx > 0 && middleParts[teamEndIdx - 1].match(/^\d{1,3}$/)) {
                                 points = middleParts[teamEndIdx - 1];
                                 teamEndIdx--;
                             }
@@ -575,16 +582,16 @@
                                 Name: name,
                                 Team: team,
                                 Points: points,
-                                LAP1: '',
+                                LAP1: lap1Time,
                                 LAP2: '',
                                 LAP3: '',
                                 LAP4: '',
                                 Penalty: '',
-                                'Total Time': 'DNF'
+                                'Total Time': lastPart  // DNF or DNS
                             };
                             
                             results.push(result);
-                            console.log(`Parsed DNF: ${placement} ${plateNum} "${name}" "${team}" Points:${points || 'blank'}`);
+                            console.log(`Parsed ${lastPart}: ${placement} ${plateNum} "${name}" "${team}" Points:${points || 'blank'} LAP1:${lap1Time || 'blank'}`);
                             
                             if (firstPageOnly && results.length >= 20) {
                                 break;
@@ -614,8 +621,8 @@
                                 teamEndIdx = j - 1;
                                 break;
                             }
-                            // Check for DNF (should have been caught by special handler above)
-                            if (parts[j] === 'DNF') {
+                            // Check for DNF/DNS (should have been caught by special handler above)
+                            if (parts[j] === 'DNF' || parts[j] === 'DNS') {
                                 ptsIdx = j;
                                 teamEndIdx = j - 1;
                                 break;
