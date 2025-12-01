@@ -635,8 +635,8 @@
                         let teamEndIdx = -1;
                         
                         for (let j = 2; j < parts.length; j++) {
-                            // Check for 3-digit number followed by time or dash
-                            if (parts[j].match(/^\d{3}$/) && j + 1 < parts.length && 
+                            // Check for 1-3 digit number (points) followed by time or dash
+                            if (parts[j].match(/^\d{1,3}$/) && j + 1 < parts.length && 
                                 (parts[j + 1].match(/^\d+:\d+/) || parts[j + 1] === '-')) {
                                 ptsIdx = j;
                                 teamEndIdx = j - 1;
@@ -644,7 +644,7 @@
                             }
                             // Check for FIRST dash or time (improved logic)
                             if (parts[j] === '-' || (parts[j].match(/^\d+:\d+/) && 
-                                (!parts[j - 1] || !parts[j - 1].match(/^\d{3}$/)))) {
+                                (!parts[j - 1] || !parts[j - 1].match(/^\d{1,3}$/)))) {
                                 ptsIdx = j;
                                 teamEndIdx = j - 1;
                                 break;
@@ -699,8 +699,8 @@
                         let actualPtsIdx = -1;
                         let actualLap1Idx = ptsIdx;
                         
-                        if (parts[ptsIdx].match(/^\d{3}$/)) {
-                            // It's a 3-digit number, so this is PTS
+                        if (parts[ptsIdx].match(/^\d{1,3}$/)) {
+                            // It's a 1-3 digit number, so this is PTS
                             actualPtsIdx = ptsIdx;
                             actualLap1Idx = ptsIdx + 1;
                         } else {
@@ -917,11 +917,15 @@
                     csv += values.join(',') + '\n';
                 });
                 
+                // Use input filename with .csv extension
+                const baseFilename = file ? file.name.replace(/\.pdf$/i, '') : 'race_results';
+                const csvFilename = fullData ? `${baseFilename}.csv` : `${baseFilename}_preview.csv`;
+                
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = fullData ? 'race_results_full.csv' : 'race_results_preview.csv';
+                a.download = csvFilename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
