@@ -438,8 +438,8 @@
                     return `${mins}:${secs.padStart(5, '0')}`;
                 };
                 
-                // Extract header info
-                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(\w+(?:\s+\w+)*)/);
+                // Extract header info - location is ALL CAPS, stops at "Individual" which is title case
+                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*([A-Z]+(?:\s+[A-Z]+)*)/);
                 const year = headerMatch ? headerMatch[1] : '';
                 const region = headerMatch ? headerMatch[2] : '';
                 const locationRaw = headerMatch ? headerMatch[3].trim() : '';
