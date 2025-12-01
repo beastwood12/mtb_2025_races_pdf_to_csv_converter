@@ -458,17 +458,6 @@
                 const lines = text.split(/\n/);
                 let currentCategory = '';
                 
-                // Team name patterns to help identify where team starts
-                const teamPatterns = [
-                    'Mountain Bike Team',
-                    'High School', 
-                    'Junior Devo',
-                    'Jr Devo',
-                    'Composite',
-                    'HS',
-                    'Devo'
-                ];
-                
                 // Match category headers
                 const categoryPattern = /^((?:Sr\.|Freshman|JV|Sophomore|Varsity|Beginner|Intermediate|Advanced|SLR).*(?:Boys|Girls|7th Grade|8th Grade))$/i;
                 
@@ -500,6 +489,12 @@
                     }
                     // Already in MM:SS.FF or M:SS format
                     return timeStr;
+                };
+                
+                // Helper function to check if word is all uppercase (for name/team splitting)
+                const isAllCaps = (word) => {
+                    const letters = word.replace(/[^A-Za-z]/g, '');
+                    return letters.length > 0 && letters === letters.toUpperCase();
                 };
                 
                 for (let i = 0; i < lines.length; i++) {
@@ -577,12 +572,6 @@
                             // Case-based name/team split (same as regular entries)
                             let teamStartIdx = -1;
                             
-                            // Helper function to check if word is all uppercase
-                            const isAllCaps = (word) => {
-                                const letters = word.replace(/[^A-Za-z]/g, '');
-                                return letters.length > 0 && letters === letters.toUpperCase();
-                            };
-                            
                             // Find first word that's NOT all caps
                             for (let i = 0; i < nameTeamParts.length; i++) {
                                 if (!isAllCaps(nameTeamParts[i])) {
@@ -625,7 +614,8 @@
                                 LAP3: '',
                                 LAP4: '',
                                 Penalty: '',
-                                'Total Time': lastPart  // DNF or DNS
+                                'Total Time': lastPart,  // DNF or DNS
+                                ValidationError: ''  // No validation for DNF/DNS
                             };
                             
                             results.push(result);
@@ -678,13 +668,6 @@
                         
                         let teamStartIdx = -1;
                         
-                        // Helper function to check if word is all uppercase
-                        const isAllCaps = (word) => {
-                            // Ignore non-letter characters like periods, numbers
-                            const letters = word.replace(/[^A-Za-z]/g, '');
-                            return letters.length > 0 && letters === letters.toUpperCase();
-                        };
-                        
                         // Find first word that's NOT all caps (has lowercase = Title Case)
                         for (let i = 0; i < middleParts.length; i++) {
                             if (!isAllCaps(middleParts[i])) {
@@ -729,22 +712,61 @@
                         // Extract values working from the END backwards
                         const totalTime = parts[parts.length - 1]; // Last element is always total time
                         
-                        // Check if second-to-last is penalty (time format, not dash)
-                        let penalty = '';
-                        let lastLapIdx = parts.length - 1; // Where laps end
-                        
-                        if (parts.length >= 2 && parts[parts.length - 2].match(/^\d+:\d+/) && parts[parts.length - 2] !== '-') {
-                            penalty = parts[parts.length - 2];
-                            lastLapIdx = parts.length - 2; // Laps end before penalty
-                        }
-                        
                         // Extract points
                         const points = actualPtsIdx >= 0 ? parts[actualPtsIdx] : '';
                         
-                        // Extract lap times between actualLap1Idx and lastLapIdx
-                        const lapValues = [];
-                        for (let i = actualLap1Idx; i < lastLapIdx; i++) {
-                            lapValues.push(parts[i] || '');
+                        // Extract all candidate time values between actualLap1Idx and totalTime
+                        const allCandidates = [];
+                        for (let i = actualLap1Idx; i < parts.length - 1; i++) {
+                            allCandidates.push(parts[i] || '');
+                        }
+                        
+                        // Penalty detection logic (max 4 laps in Utah HS MTB)
+                        // Rule 1: If dash followed by time value, that time is penalty
+                        // Rule 2: If 5+ time values, last one is penalty
+                        let penalty = '';
+                        let lapValues = [];
+                        
+                        // Check for dash followed by time (dash indicates empty LAP slot, next value is penalty)
+                        let dashIdx = -1;
+                        for (let i = 0; i < allCandidates.length - 1; i++) {
+                            if (allCandidates[i] === '-' && 
+                                allCandidates[i + 1] && 
+                                allCandidates[i + 1].match(/^\d+:\d+/)) {
+                                dashIdx = i;
+                                break;
+                            }
+                        }
+                        
+                        if (dashIdx >= 0) {
+                            // Dash found - everything after dash is penalty
+                            lapValues = allCandidates.slice(0, dashIdx + 1); // Include the dash
+                            penalty = allCandidates[dashIdx + 1];
+                        } else {
+                            // No dash pattern - count time values
+                            const timeValues = allCandidates.filter(c => c && c !== '-' && c.match(/^\d+:\d+/));
+                            
+                            if (timeValues.length > 4) {
+                                // More than 4 time values - last one is penalty
+                                // Find the last time value position in allCandidates
+                                let lastTimeIdx = -1;
+                                for (let i = allCandidates.length - 1; i >= 0; i--) {
+                                    if (allCandidates[i] && allCandidates[i] !== '-' && allCandidates[i].match(/^\d+:\d+/)) {
+                                        lastTimeIdx = i;
+                                        break;
+                                    }
+                                }
+                                
+                                if (lastTimeIdx >= 0) {
+                                    penalty = allCandidates[lastTimeIdx];
+                                    lapValues = allCandidates.slice(0, lastTimeIdx);
+                                } else {
+                                    lapValues = allCandidates;
+                                }
+                            } else {
+                                // 4 or fewer time values - all are laps, no penalty
+                                lapValues = allCandidates;
+                            }
                         }
                         
                         // Assign to LAP1-4 (pad with empty strings if needed)
@@ -757,28 +779,41 @@
                         const lap1Converted = convertTime(lap1 === '-' ? '' : lap1);
                         const lap2Converted = convertTime(lap2 === '-' ? '' : lap2);
                         const lap3Converted = convertTime(lap3 === '-' ? '' : lap3);
-                        let lap4Converted = convertTime(lap4 === '-' ? '' : lap4);
+                        const lap4Converted = convertTime(lap4 === '-' ? '' : lap4);
+                        const penaltyConverted = convertTime(penalty === '-' ? '' : penalty);
                         const totalTimeConverted = totalTime === 'DNF' ? 'DNF' : convertTime(totalTime);
                         
-                        // Calculate LAP4 for Varsity Boys if missing
-                        if (currentCategory === 'Varsity Boys' && 
-                            lap1Converted && lap2Converted && lap3Converted && 
-                            !lap4Converted && 
-                            totalTimeConverted && totalTimeConverted !== 'DNF') {
-                            
-                            const lap1Secs = timeToSeconds(lap1Converted);
-                            const lap2Secs = timeToSeconds(lap2Converted);
-                            const lap3Secs = timeToSeconds(lap3Converted);
+                        // Validation: sum of laps + penalty should equal total time
+                        let validationError = '';
+                        if (totalTimeConverted && totalTimeConverted !== 'DNF') {
                             const totalSecs = timeToSeconds(totalTimeConverted);
                             
-                            if (lap1Secs !== null && lap2Secs !== null && lap3Secs !== null && totalSecs !== null) {
-                                const sumLaps = lap1Secs + lap2Secs + lap3Secs;
-                                const diff = totalSecs - sumLaps;
+                            // Sum all available lap times
+                            let sumSecs = 0;
+                            let hasAnyLap = false;
+                            
+                            [lap1Converted, lap2Converted, lap3Converted, lap4Converted].forEach(lap => {
+                                const secs = timeToSeconds(lap);
+                                if (secs !== null) {
+                                    sumSecs += secs;
+                                    hasAnyLap = true;
+                                }
+                            });
+                            
+                            // Add penalty if present
+                            const penaltySecs = timeToSeconds(penaltyConverted);
+                            if (penaltySecs !== null) {
+                                sumSecs += penaltySecs;
+                            }
+                            
+                            // Only validate if we have lap data and total time
+                            if (hasAnyLap && totalSecs !== null) {
+                                const diff = Math.abs(totalSecs - sumSecs);
+                                const tolerance = 3; // seconds
                                 
-                                // If difference > 60 seconds, there's a missing LAP4
-                                if (diff > 60) {
-                                    lap4Converted = secondsToTime(diff);
-                                    console.log(`Calculated LAP4 for ${name}: ${lap4Converted}`);
+                                if (diff > tolerance) {
+                                    validationError = `Time mismatch: laps+penalty=${Math.floor(sumSecs/60)}:${(sumSecs%60).toFixed(2)}, total=${Math.floor(totalSecs/60)}:${(totalSecs%60).toFixed(2)}, diff=${diff.toFixed(2)}s`;
+                                    console.warn(`Validation error for ${name}: ${validationError}`);
                                 }
                             }
                         }
@@ -798,8 +833,9 @@
                             LAP2: lap2Converted,
                             LAP3: lap3Converted,
                             LAP4: lap4Converted,
-                            Penalty: convertTime(penalty === '-' ? '' : penalty),
-                            'Total Time': totalTimeConverted
+                            Penalty: penaltyConverted,
+                            'Total Time': totalTimeConverted,
+                            ValidationError: validationError
                         };
                         
                         results.push(result);
@@ -865,7 +901,7 @@
                 const data = fullData || previewData;
                 if (!data || data.length === 0) return;
                 
-                const headers = ['Year', 'Region', 'Race Name', 'Race Course', 'Race Category', 'Placement', 'Plate#', 'Name', 'Team', 'Points', 'LAP1', 'LAP2', 'LAP3', 'LAP4', 'Penalty', 'Total Time'];
+                const headers = ['Year', 'Region', 'Race Name', 'Race Course', 'Race Category', 'Placement', 'Plate#', 'Name', 'Team', 'Points', 'LAP1', 'LAP2', 'LAP3', 'LAP4', 'Penalty', 'Total Time', 'ValidationError'];
                 
                 let csv = headers.join(',') + '\n';
                 
@@ -973,6 +1009,14 @@
                                         <div className="stat-label">Race Course</div>
                                         <div className="stat-value">{dataToDisplay[0]?.['Race Course'] || 'N/A'}</div>
                                     </div>
+                                    {dataToDisplay.filter(r => r.ValidationError).length > 0 && (
+                                        <div className="stat-card" style={{ borderLeftColor: '#ef4444', background: '#fef2f2' }}>
+                                            <div className="stat-label" style={{ color: '#991b1b' }}>⚠️ Validation Errors</div>
+                                            <div className="stat-value" style={{ color: '#dc2626' }}>
+                                                {dataToDisplay.filter(r => r.ValidationError).length}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="action-buttons" style={{ marginBottom: '20px' }}>
@@ -1017,11 +1061,12 @@
                                                 <th>LAP4</th>
                                                 <th>Penalty</th>
                                                 <th>Total Time</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {dataToDisplay.slice(0, 15).map((row, idx) => (
-                                                <tr key={idx}>
+                                                <tr key={idx} style={row.ValidationError ? { background: '#fef2f2' } : {}}>
                                                     <td>{row.Placement}</td>
                                                     <td>{row['Plate#']}</td>
                                                     <td>{row.Name}</td>
@@ -1034,6 +1079,9 @@
                                                     <td>{row.LAP4}</td>
                                                     <td>{row.Penalty}</td>
                                                     <td>{row['Total Time']}</td>
+                                                    <td title={row.ValidationError || 'OK'}>
+                                                        {row.ValidationError ? '⚠️' : '✓'}
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
