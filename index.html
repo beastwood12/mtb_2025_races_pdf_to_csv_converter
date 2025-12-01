@@ -450,9 +450,8 @@
                 // Split into lines first
                 const lines = text.split(/\n/);
                 
-                // Extract header info from first line only (avoids "Individual Results" pollution)
-                const firstLine = lines[0] || '';
-                const headerMatch = firstLine.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(.+)/);
+                // Extract header info - search full text for header pattern, stop before "Individual"
+                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*([A-Z][A-Z\s]+?)(?=\s*Individual|\s*\n|\s*$)/i);
                 const year = headerMatch ? headerMatch[1] : '';
                 const region = headerMatch ? headerMatch[2] : '';
                 const locationRaw = headerMatch ? headerMatch[3].trim() : '';
