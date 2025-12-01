@@ -439,13 +439,15 @@
                 };
                 
                 // Extract header info
-                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(\w+)/);
+                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(\w+(?:\s+\w+)*)/);
                 const year = headerMatch ? headerMatch[1] : '';
                 const region = headerMatch ? headerMatch[2] : '';
-                const locationRaw = headerMatch ? headerMatch[3] : '';
+                const locationRaw = headerMatch ? headerMatch[3].trim() : '';
                 
-                // Title case the location for Race Course
-                const raceCourse = locationRaw.charAt(0).toUpperCase() + locationRaw.slice(1).toLowerCase();
+                // Title case the location for Race Course (handle multi-word names)
+                const raceCourse = locationRaw.split(/\s+/).map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
                 
                 // Extract race number from filename (e.g., "Race1" or "Race_1" from filename)
                 const raceNumMatch = filename.match(/Race[_\s]?(\d+)/i);
