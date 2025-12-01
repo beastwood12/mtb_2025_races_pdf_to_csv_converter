@@ -19,48 +19,48 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             overflow: hidden;
         }
         
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 15px 20px;
             text-align: center;
         }
         
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 8px;
+            font-size: 22px;
+            margin-bottom: 2px;
         }
         
         .header p {
             opacity: 0.9;
-            font-size: 16px;
+            font-size: 13px;
         }
         
         .content {
-            padding: 30px;
+            padding: 15px;
         }
         
         .upload-section {
-            border: 3px dashed #667eea;
-            border-radius: 8px;
-            padding: 40px;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            padding: 20px;
             text-align: center;
             background: #f8f9ff;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
         
         .upload-section:hover {
@@ -74,8 +74,12 @@
         }
         
         .upload-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .upload-section h3 {
+            font-size: 14px;
         }
         
         .file-input {
@@ -83,16 +87,16 @@
         }
         
         .btn {
-            padding: 12px 24px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 6px;
-            font-size: 16px;
+            border-radius: 4px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .btn-primary {
@@ -123,64 +127,68 @@
         }
         
         .status-message {
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+            font-size: 13px;
         }
         
         .status-info {
             background: #dbeafe;
             color: #1e40af;
-            border-left: 4px solid #3b82f6;
+            border-left: 3px solid #3b82f6;
         }
         
         .status-success {
             background: #d1fae5;
             color: #065f46;
-            border-left: 4px solid #10b981;
+            border-left: 3px solid #10b981;
         }
         
         .status-error {
             background: #fee2e2;
             color: #991b1b;
-            border-left: 4px solid #ef4444;
+            border-left: 3px solid #ef4444;
         }
         
         .preview-section {
-            margin-top: 30px;
+            margin-top: 15px;
         }
         
         .preview-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         
         .preview-header h2 {
-            font-size: 24px;
+            font-size: 16px;
             color: #1f2937;
         }
         
         .table-container {
             overflow-x: auto;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 11px;
+            white-space: nowrap;
         }
         
         th {
             background: #f9fafb;
-            padding: 12px;
+            padding: 6px 8px;
             text-align: left;
             font-weight: 600;
             color: #374151;
@@ -190,7 +198,7 @@
         }
         
         td {
-            padding: 12px;
+            padding: 5px 8px;
             border-bottom: 1px solid #e5e7eb;
         }
         
@@ -202,16 +210,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px;
-            gap: 12px;
+            padding: 20px;
+            gap: 8px;
+            font-size: 13px;
         }
         
         .spinner {
-            border: 3px solid #f3f4f6;
-            border-top: 3px solid #667eea;
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
         
@@ -219,8 +228,8 @@
             border: 2px solid #f3f4f6;
             border-top: 2px solid #ffffff;
             border-radius: 50%;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
             animation: spin 1s linear infinite;
         }
         
@@ -231,32 +240,32 @@
         
         .action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         
         .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
         }
         
         .stat-card {
             background: #f9fafb;
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
         }
         
         .stat-label {
-            font-size: 14px;
+            font-size: 11px;
             color: #6b7280;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         .stat-value {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: 700;
             color: #1f2937;
         }
@@ -438,8 +447,12 @@
                     return `${mins}:${secs.padStart(5, '0')}`;
                 };
                 
-                // Extract header info - location is ALL CAPS, stops at "Individual" which is title case
-                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*([A-Z]+(?:\s+[A-Z]+)*)/);
+                // Split into lines first
+                const lines = text.split(/\n/);
+                
+                // Extract header info from first line only (avoids "Individual Results" pollution)
+                const firstLine = lines[0] || '';
+                const headerMatch = firstLine.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(.+)/);
                 const year = headerMatch ? headerMatch[1] : '';
                 const region = headerMatch ? headerMatch[2] : '';
                 const locationRaw = headerMatch ? headerMatch[3].trim() : '';
@@ -456,8 +469,6 @@
                 // Build Race Name: "Region X: Race Y - Location"
                 const raceName = raceNum ? `Region ${region}: Race ${raceNum} - ${raceCourse}` : `Region ${region}: ${raceCourse}`;
                 
-                // Split into lines
-                const lines = text.split(/\n/);
                 let currentCategory = '';
                 
                 // Match category headers
@@ -953,7 +964,7 @@
                         >
                             <div className="upload-icon">📄</div>
                             <h3>{file ? file.name : 'Click or drag PDF file here'}</h3>
-                            <p style={{ marginTop: '8px', color: '#6b7280' }}>
+                            <p style={{ marginTop: '4px', color: '#6b7280', fontSize: '12px' }}>
                                 {file ? 'Click to select a different file' : 'MTB Race Results PDF'}
                             </p>
                             <input
@@ -987,9 +998,9 @@
                             <div className="preview-section">
                                 <div className="preview-header">
                                     <h2>
-                                        {fullData ? 'Full Results' : 'Preview (First Page Only)'}
-                                        {!fullData && <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#6b7280', marginLeft: '12px' }}>
-                                            — Process full document to see all results
+                                        {fullData ? 'Full Results' : 'Preview (Page 1)'}
+                                        {!fullData && <span style={{ fontSize: '12px', fontWeight: 'normal', color: '#6b7280', marginLeft: '8px' }}>
+                                            — Process full doc to see all
                                         </span>}
                                     </h2>
                                 </div>
@@ -1025,7 +1036,7 @@
                                     )}
                                 </div>
 
-                                <div className="action-buttons" style={{ marginBottom: '20px' }}>
+                                <div className="action-buttons" style={{ marginBottom: '10px' }}>
                                     {!fullData && (
                                         <button 
                                             className="btn btn-primary"
@@ -1055,29 +1066,37 @@
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th>Placement</th>
+                                                <th>Year</th>
+                                                <th>Region</th>
+                                                <th>Race Name</th>
+                                                <th>Race Course</th>
+                                                <th>Category</th>
+                                                <th>Plc</th>
                                                 <th>Plate#</th>
                                                 <th>Name</th>
                                                 <th>Team</th>
-                                                <th>Category</th>
-                                                <th>Points</th>
+                                                <th>Pts</th>
                                                 <th>LAP1</th>
                                                 <th>LAP2</th>
                                                 <th>LAP3</th>
                                                 <th>LAP4</th>
-                                                <th>Penalty</th>
-                                                <th>Total Time</th>
-                                                <th>Status</th>
+                                                <th>Pen</th>
+                                                <th>Total</th>
+                                                <th>✓</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {dataToDisplay.slice(0, 15).map((row, idx) => (
+                                            {dataToDisplay.slice(0, 20).map((row, idx) => (
                                                 <tr key={idx} style={row.ValidationError ? { background: '#fef2f2' } : {}}>
+                                                    <td>{row.Year}</td>
+                                                    <td>{row.Region}</td>
+                                                    <td>{row['Race Name']}</td>
+                                                    <td>{row['Race Course']}</td>
+                                                    <td>{row['Race Category']}</td>
                                                     <td>{row.Placement}</td>
                                                     <td>{row['Plate#']}</td>
                                                     <td>{row.Name}</td>
                                                     <td>{row.Team}</td>
-                                                    <td>{row['Race Category']}</td>
                                                     <td>{row.Points}</td>
                                                     <td>{row.LAP1}</td>
                                                     <td>{row.LAP2}</td>
@@ -1094,9 +1113,9 @@
                                     </table>
                                 </div>
 
-                                {dataToDisplay.length > 15 && (
-                                    <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '20px' }}>
-                                        Showing first 15 of {dataToDisplay.length} entries
+                                {dataToDisplay.length > 20 && (
+                                    <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '12px', marginBottom: '10px' }}>
+                                        Showing first 20 of {dataToDisplay.length} entries
                                     </p>
                                 )}
                             </div>
