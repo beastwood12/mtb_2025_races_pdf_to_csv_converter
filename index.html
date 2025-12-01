@@ -821,7 +821,7 @@
                             // Only validate if we have lap data and total time
                             if (hasAnyLap && totalSecs !== null) {
                                 const diff = Math.abs(totalSecs - sumSecs);
-                                const tolerance = 3; // seconds
+                                const tolerance = 5; // seconds
                                 
                                 if (diff > tolerance) {
                                     validationError = `Time mismatch: laps+penalty=${Math.floor(sumSecs/60)}:${(sumSecs%60).toFixed(2)}, total=${Math.floor(totalSecs/60)}:${(totalSecs%60).toFixed(2)}, diff=${diff.toFixed(2)}s`;
