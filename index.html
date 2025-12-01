@@ -329,7 +329,7 @@
                     console.log('Extracted text preview:', text.substring(0, 500));
                     
                     // Parse the first page
-                    const results = parseRaceResults(text, true);
+                    const results = parseRaceResults(text, true, pdfFile.name);
                     
                     console.log('Parsed results:', results.length, 'entries');
                     
@@ -385,7 +385,7 @@
                     
                     console.log('Full text sample:', allText.substring(0, 500));
                     
-                    const results = parseRaceResults(allText, false);
+                    const results = parseRaceResults(allText, false, file.name);
                     
                     console.log('Full parsing results:', results.length, 'entries');
                     
@@ -408,14 +408,51 @@
                 }
             };
 
-            const parseRaceResults = (text, firstPageOnly) => {
+            const parseRaceResults = (text, firstPageOnly, filename = '') => {
                 const results = [];
+                
+                // Time conversion functions for LAP4 calculation
+                const timeToSeconds = (timeStr) => {
+                    if (!timeStr || timeStr === '-' || timeStr === '') return null;
+                    // Handle formats: MM:SS.FF, M:SS.FF, HH:MM:SS.FF, H:MM:SS.FF
+                    const parts = timeStr.split(':');
+                    if (parts.length === 2) {
+                        // MM:SS.FF or M:SS.FF
+                        const mins = parseInt(parts[0]);
+                        const secs = parseFloat(parts[1]);
+                        return mins * 60 + secs;
+                    } else if (parts.length === 3) {
+                        // HH:MM:SS.FF or H:MM:SS.FF
+                        const hrs = parseInt(parts[0]);
+                        const mins = parseInt(parts[1]);
+                        const secs = parseFloat(parts[2]);
+                        return hrs * 3600 + mins * 60 + secs;
+                    }
+                    return null;
+                };
+                
+                const secondsToTime = (totalSecs) => {
+                    if (totalSecs === null || totalSecs < 0) return '';
+                    const mins = Math.floor(totalSecs / 60);
+                    const secs = (totalSecs % 60).toFixed(2);
+                    return `${mins}:${secs.padStart(5, '0')}`;
+                };
                 
                 // Extract header info
                 const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*(\w+)/);
                 const year = headerMatch ? headerMatch[1] : '';
                 const region = headerMatch ? headerMatch[2] : '';
-                const location = headerMatch ? headerMatch[3] : '';
+                const locationRaw = headerMatch ? headerMatch[3] : '';
+                
+                // Title case the location for Race Course
+                const raceCourse = locationRaw.charAt(0).toUpperCase() + locationRaw.slice(1).toLowerCase();
+                
+                // Extract race number from filename (e.g., "Race1" or "Race_1" from filename)
+                const raceNumMatch = filename.match(/Race[_\s]?(\d+)/i);
+                const raceNum = raceNumMatch ? raceNumMatch[1] : '';
+                
+                // Build Race Name: "Region X: Race Y - Location"
+                const raceName = raceNum ? `Region ${region}: Race ${raceNum} - ${raceCourse}` : `Region ${region}: ${raceCourse}`;
                 
                 // Split into lines
                 const lines = text.split(/\n/);
@@ -575,7 +612,8 @@
                             const result = {
                                 Year: year,
                                 Region: region,
-                                Location: location,
+                                'Race Name': raceName,
+                                'Race Course': raceCourse,
                                 'Race Category': currentCategory,
                                 Placement: placement,
                                 'Plate#': plateNum,
@@ -713,24 +751,55 @@
                         const lap1 = lapValues[0] || '';
                         const lap2 = lapValues[1] || '';
                         const lap3 = lapValues[2] || '';
-                        const lap4 = lapValues[3] || '';
+                        let lap4 = lapValues[3] || '';
+                        
+                        // Convert times for the result
+                        const lap1Converted = convertTime(lap1 === '-' ? '' : lap1);
+                        const lap2Converted = convertTime(lap2 === '-' ? '' : lap2);
+                        const lap3Converted = convertTime(lap3 === '-' ? '' : lap3);
+                        let lap4Converted = convertTime(lap4 === '-' ? '' : lap4);
+                        const totalTimeConverted = totalTime === 'DNF' ? 'DNF' : convertTime(totalTime);
+                        
+                        // Calculate LAP4 for Varsity Boys if missing
+                        if (currentCategory === 'Varsity Boys' && 
+                            lap1Converted && lap2Converted && lap3Converted && 
+                            !lap4Converted && 
+                            totalTimeConverted && totalTimeConverted !== 'DNF') {
+                            
+                            const lap1Secs = timeToSeconds(lap1Converted);
+                            const lap2Secs = timeToSeconds(lap2Converted);
+                            const lap3Secs = timeToSeconds(lap3Converted);
+                            const totalSecs = timeToSeconds(totalTimeConverted);
+                            
+                            if (lap1Secs !== null && lap2Secs !== null && lap3Secs !== null && totalSecs !== null) {
+                                const sumLaps = lap1Secs + lap2Secs + lap3Secs;
+                                const diff = totalSecs - sumLaps;
+                                
+                                // If difference > 60 seconds, there's a missing LAP4
+                                if (diff > 60) {
+                                    lap4Converted = secondsToTime(diff);
+                                    console.log(`Calculated LAP4 for ${name}: ${lap4Converted}`);
+                                }
+                            }
+                        }
                         
                         const result = {
                             Year: year,
                             Region: region,
-                            Location: location,
+                            'Race Name': raceName,
+                            'Race Course': raceCourse,
                             'Race Category': currentCategory,
                             Placement: placement,
                             'Plate#': plateNum,
                             Name: name,
                             Team: team,
                             Points: points === '-' ? '' : points,
-                            LAP1: convertTime(lap1 === '-' ? '' : lap1),
-                            LAP2: convertTime(lap2 === '-' ? '' : lap2),
-                            LAP3: convertTime(lap3 === '-' ? '' : lap3),
-                            LAP4: convertTime(lap4 === '-' ? '' : lap4),
+                            LAP1: lap1Converted,
+                            LAP2: lap2Converted,
+                            LAP3: lap3Converted,
+                            LAP4: lap4Converted,
                             Penalty: convertTime(penalty === '-' ? '' : penalty),
-                            'Total Time': totalTime === 'DNF' ? 'DNF' : convertTime(totalTime)
+                            'Total Time': totalTimeConverted
                         };
                         
                         results.push(result);
@@ -796,7 +865,7 @@
                 const data = fullData || previewData;
                 if (!data || data.length === 0) return;
                 
-                const headers = ['Year', 'Region', 'Location', 'Race Category', 'Placement', 'Plate#', 'Name', 'Team', 'Points', 'LAP1', 'LAP2', 'LAP3', 'LAP4', 'Penalty', 'Total Time'];
+                const headers = ['Year', 'Region', 'Race Name', 'Race Course', 'Race Category', 'Placement', 'Plate#', 'Name', 'Team', 'Points', 'LAP1', 'LAP2', 'LAP3', 'LAP4', 'Penalty', 'Total Time'];
                 
                 let csv = headers.join(',') + '\n';
                 
@@ -901,8 +970,8 @@
                                         </div>
                                     </div>
                                     <div className="stat-card">
-                                        <div className="stat-label">Location</div>
-                                        <div className="stat-value">{dataToDisplay[0]?.Location || 'N/A'}</div>
+                                        <div className="stat-label">Race Course</div>
+                                        <div className="stat-value">{dataToDisplay[0]?.['Race Course'] || 'N/A'}</div>
                                     </div>
                                 </div>
 
