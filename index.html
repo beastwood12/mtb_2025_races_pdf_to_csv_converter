@@ -450,11 +450,25 @@
                 // Split into lines first
                 const lines = text.split(/\n/);
                 
-                // Extract header info - search full text for header pattern, stop before "Individual"
-                const headerMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*([A-Z][A-Z\s]+?)(?=\s*Individual|\s*\n|\s*$)/i);
-                const year = headerMatch ? headerMatch[1] : '';
-                const region = headerMatch ? headerMatch[2] : '';
-                const locationRaw = headerMatch ? headerMatch[3].trim() : '';
+                // Extract header info - try STATE CHAMPIONSHIP first, then REGION pattern
+                let year = '';
+                let region = '';
+                let locationRaw = '';
+                let isStateChampionship = false;
+                
+                const stateMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*STATE CHAMPIONSHIP\s*-\s*([A-Z][A-Z\s]+?)(?=\s*Individual|\s*\n|\s*$)/i);
+                const regionMatch = text.match(/UTAH HS MTB (\d+)\s*-\s*REGION (\d+)\s*-\s*([A-Z][A-Z\s]+?)(?=\s*Individual|\s*\n|\s*$)/i);
+                
+                if (stateMatch) {
+                    year = stateMatch[1];
+                    region = 'STATE CHAMPIONSHIP';
+                    locationRaw = stateMatch[2].trim();
+                    isStateChampionship = true;
+                } else if (regionMatch) {
+                    year = regionMatch[1];
+                    region = regionMatch[2];
+                    locationRaw = regionMatch[3].trim();
+                }
                 
                 // Title case the location for Race Course (handle multi-word names)
                 const raceCourse = locationRaw.split(/\s+/).map(word => 
@@ -465,8 +479,13 @@
                 const raceNumMatch = filename.match(/Race[_\s]?(\d+)/i);
                 const raceNum = raceNumMatch ? raceNumMatch[1] : '';
                 
-                // Build Race Name: "Region X: Race Y - Location"
-                const raceName = raceNum ? `Region ${region}: Race ${raceNum} - ${raceCourse}` : `Region ${region}: ${raceCourse}`;
+                // Build Race Name based on type
+                let raceName = '';
+                if (isStateChampionship) {
+                    raceName = `State Championship - ${raceCourse}`;
+                } else {
+                    raceName = raceNum ? `Region ${region}: Race ${raceNum} - ${raceCourse}` : `Region ${region}: ${raceCourse}`;
+                }
                 
                 let currentCategory = '';
                 
